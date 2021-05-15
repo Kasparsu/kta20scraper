@@ -3,6 +3,7 @@ const cheerio = require('cheerio');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const { exit } = require('process');
 // axios.get('https://xkcd.com/').then((response)=> {
 //     const $ = cheerio.load(response.data);
 //     console.log('callback', $('#comic img').attr('src'));
@@ -28,10 +29,14 @@ async function getOrCache(url){
     try {
         if (fs.existsSync(cacheName)) {
             console.log('cached request');
-          return fs.readFileSync(cacheName, {encoding:'utf8', flag:'r'});
+          return JSON.parse(fs.readFileSync(cacheName, {encoding:'utf8', flag:'r'}));
         } else {
-            let response = await axios.get(url);
-             fs.writeFileSync(cacheName, response.data);
+            let response = await axios.get(url, { 
+                headers: {
+                    'accept': 'application/json'
+                }
+            });
+            fs.writeFileSync(cacheName, JSON.stringify(response.data));
             console.log('live request');
             return response.data;
         }
@@ -41,14 +46,20 @@ async function getOrCache(url){
 }
 
 (async ()=> {
-    for(let i = 2462; i>2452; i--){
+
+    let prev = 'https://www.prismamarket.ee/products/16929/page/1?main_view=1';
+    for(let i = 0; i<1; i++){
         try {
-            let data = await getOrCache(`https://xkcd.com/${i}/`);
-            const $ = cheerio.load(data);
-            let src = 'https:' + $('#comic img').attr('src');
-            let title = $('#comic img').attr('alt')
-            console.log(src, title);
-            let parts = src.split('/');
+            let data = await getOrCache(prev);
+            console.log(data);
+            // const $ = cheerio.load(data);
+            // let src = baseURL + $('.box-content img').attr('src');
+            // if(!$('.prev').length){
+            //     return;
+            // }
+            // prev = baseURL + $('.prev').attr('href');
+            // console.log(src);
+            // let parts = src.split('/');
             //await download(src, 'images/'+parts[parts.length-1]);
         } catch (err) {
             console.log(err);
